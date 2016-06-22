@@ -8,7 +8,7 @@ import java.sql.Statement;
 
 /**
  * 
- * @author takynd
+ * @author tayoneda
  *
  */
 public class ConnectionManager {

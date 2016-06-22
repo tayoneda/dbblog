@@ -1,5 +1,9 @@
 package blog;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -7,8 +11,6 @@ import java.util.List;
 public class BlogController {
 	
 	private static BlogController controller = new BlogController();
-	private int idCounter;
-	private List<Topic> topics = new ArrayList<Topic>();
 	
 	/**
 	 * get an instance of BlogController
@@ -26,10 +28,33 @@ public class BlogController {
 	 * @param topic
 	 */
 	public void postTopic(Topic topic) {
-		synchronized (this) {
-			topic.setId(idCounter++);
-			topic.setPostDate(new Date());
-			topics.add(topic);
+		String sql = "INSERT INTO TOPIC(TITLE, CONTENT)"
+				+ " VALUES(" + "'" + topic.getTitle() + "'"
+				+ ",'" + topic.getContent() + "'" + ")";
+		
+		Connection con = null;
+		Statement smt = null;
+		try {
+			con = ConnectionManager.getConnection();
+			smt = con.createStatement();
+			smt.executeUpdate(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (smt != null) {
+				try {
+					smt.close();
+				} catch (Exception ignore) {
+					
+				}
+			}
+			if (con != null) {
+				try {
+					con.close();
+				} catch (Exception ignore) {
+					
+				}
+			}
 		}
 	}
 	/**
@@ -37,6 +62,57 @@ public class BlogController {
 	 * @return list of topics
 	 */
 	public List<Topic> getTopics() {
-		return new ArrayList<Topic>(topics);
+		String sql = "SELECT * FROM TOPIC";
+		List<Topic> topics = new ArrayList<Topic>();
+		
+		Connection con = null;
+		Statement smt = null;
+		ResultSet rs = null;
+		try {
+			con = ConnectionManager.getConnection();
+			smt = con.createStatement();
+			rs = smt.executeQuery(sql);
+			while (rs.next()) {
+				Topic topic = new Topic();
+				topic.setId(rs.getInt("ID"));
+				topic.setPostDate(rs.getTimestamp("POST_DATE"));
+				topic.setTitle(rs.getString("TITLE"));
+				topic.setContent(rs.getString("CONTENT"));
+				topics.add(topic);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (Exception ignore) {
+				}
+			}
+			if (smt != null) {
+				try {
+					smt.close();
+				} catch (Exception ignore) {
+				}
+			}
+			if (con != null) {
+				try {
+					con.close();
+				} catch (Exception ignore) {
+				}
+			}
+		}
+		
+		return topics;
+	}
+	
+	public static void main(String[] args) {
+		BlogController ctrl = BlogController.getInstance();
+		List<Topic> topics = ctrl.getTopics();
+		for (int i = 0; i < topics.size(); i++) {
+			System.out.println(topics.get(i));
+		}
+		
+		System.out.println("END");
 	}
 }
